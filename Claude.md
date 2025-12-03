@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-ChatForm is an intelligent form validation system that combines rule-based validation with AI-powered conversational resolution. The system collects applicant data, identifies potential red flags using a rule engine, and uses an interactive chatbot to resolve inconsistencies through natural conversation.
+ChatForm is an intelligent form validation system that combines rule-based validation with AI-powered conversational resolution. The system collects applicant data, identifies potential red flags using a rule engine, and uses an interactive chatbot to resolve inconsistencies through natural conversation
 
 ### Core Components
 

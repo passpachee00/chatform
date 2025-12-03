@@ -16,6 +16,8 @@ app = FastAPI(
 )
 
 # CORS middleware
+# For production, set CORS_ORIGINS in Railway dashboard:
+# Example: http://localhost:3000,https://your-app.vercel.app
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
 app.add_middleware(

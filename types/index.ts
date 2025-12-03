@@ -68,4 +68,29 @@ export interface ChatMessageRequest {
   message: string;
   applicationData: ApplicationData;
   currentFlag: RedFlag;
+  conversationHistory?: ChatMessage[];
+}
+
+// Chat session context (for frontend state management)
+export interface ChatSessionContext {
+  redFlag: RedFlag;
+  applicationData: ApplicationData;
+  conversationHistory: ChatMessage[];
+}
+
+// Chat API request payload (simplified for frontend use)
+export interface ChatMessagePayload {
+  message: string;
+  redFlag: RedFlag;
+  applicationData: ApplicationData;
+  conversationHistory: ChatMessage[];
+}
+
+// Chat API response
+export interface ChatMessageResponse {
+  role: "assistant";
+  content: string;
+  timestamp: Date;
+  status: "success" | "error";
+  error?: string;
 }

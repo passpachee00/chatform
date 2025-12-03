@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Literal
+from datetime import datetime
 
 
 class ApplicationData(BaseModel):
@@ -26,3 +27,28 @@ class RedFlag(BaseModel):
 class ValidationResponse(BaseModel):
     """Response from validation endpoint"""
     red_flags: list[RedFlag]
+
+
+# Chat-related schemas
+class ChatMessage(BaseModel):
+    """Single chat message"""
+    role: Literal["user", "assistant"]
+    content: str
+    timestamp: Optional[datetime] = None
+
+
+class ChatMessageRequest(BaseModel):
+    """Request to send chat message"""
+    message: str
+    redFlag: RedFlag
+    applicationData: ApplicationData
+    conversationHistory: list[ChatMessage] = []
+
+
+class ChatMessageResponse(BaseModel):
+    """Response from chat endpoint"""
+    role: Literal["assistant"]
+    content: str
+    timestamp: datetime
+    status: Literal["success", "error"]
+    error: Optional[str] = None

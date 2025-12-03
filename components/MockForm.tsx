@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import type { ApplicationData } from "@/types";
+import { useState, useMemo } from "react";
+import type { ApplicationData, RedFlag } from "@/types";
+import ChatBot from "./ChatBot";
 
 type RuleStatus = "pending" | "pass" | "fail";
 
@@ -10,6 +11,7 @@ interface Rule {
   label: string;
   status: RuleStatus;
   debugInfo?: any;
+  redFlag?: RedFlag;
 }
 
 export default function MockForm() {
@@ -32,6 +34,22 @@ export default function MockForm() {
     { id: "distance_check", label: "Address Distance Check", status: "pending" },
     // { id: "income_plausibility", label: "Income Plausibility Check", status: "pending" },
     // { id: "contradictions", label: "Field Contradictions Check", status: "pending" },
+  ]);
+
+  const [activeRedFlag, setActiveRedFlag] = useState<RedFlag | null>(null);
+
+  // Stabilize object references to prevent chat from resetting
+  const stableRedFlag = useMemo(() => activeRedFlag, [activeRedFlag?.rule]);
+  const stableFormData = useMemo(() => formData, [
+    formData.currentAddress,
+    formData.occupation,
+    formData.jobTitle,
+    formData.companyName,
+    formData.companyAddress,
+    formData.monthlyIncome,
+    formData.incomeSource,
+    formData.currentAssets,
+    formData.countryIncomeSources,
   ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,6 +84,7 @@ export default function MockForm() {
             ...rule,
             status: flag ? "fail" : "pass",
             debugInfo: flag?.debugInfo || null,
+            redFlag: flag || undefined,
           };
         })
       );
@@ -308,7 +327,17 @@ export default function MockForm() {
                   }`}
                 />
                 {/* Rule Label */}
-                <span className="text-sm text-black">{rule.label}</span>
+                <span className="text-sm text-black flex-1">{rule.label}</span>
+
+                {/* Fix It Button */}
+                {rule.status === "fail" && rule.redFlag && (
+                  <button
+                    onClick={() => setActiveRedFlag(rule.redFlag!)}
+                    className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  >
+                    Fix It
+                  </button>
+                )}
               </div>
 
               {/* Debug Info Box */}
@@ -353,6 +382,17 @@ export default function MockForm() {
           ))}
         </div>
       </div>
+
+      {/* ChatBot Modal */}
+      {activeRedFlag && (
+        <ChatBot
+          key={activeRedFlag.rule}
+          redFlag={stableRedFlag!}
+          applicationData={stableFormData}
+          isOpen={!!activeRedFlag}
+          onClose={() => setActiveRedFlag(null)}
+        />
+      )}
     </form>
   );
 }

@@ -383,16 +383,13 @@ export default function MockForm() {
         </div>
       </div>
 
-      {/* ChatBot Modal */}
-      {activeRedFlag && (
-        <ChatBot
-          key={activeRedFlag.rule}
-          redFlag={stableRedFlag!}
-          applicationData={stableFormData}
-          isOpen={!!activeRedFlag}
-          onClose={() => setActiveRedFlag(null)}
-        />
-      )}
+      {/* ChatBot Modal - Always mounted to preserve conversation history */}
+      <ChatBot
+        redFlag={stableRedFlag || activeRedFlag || { rule: "", message: "", affectedFields: [] }}
+        applicationData={stableFormData}
+        isOpen={!!activeRedFlag}
+        onClose={() => setActiveRedFlag(null)}
+      />
     </form>
   );
 }

@@ -17,18 +17,19 @@ export default function ChatBot({
   isOpen,
   onClose,
 }: ChatBotProps) {
-  const { messages, isLoading, error, sendMessage, initializeChat, reset } =
+  const { messages, isLoading, error, sendMessage, initializeChat } =
     useChat(redFlag, applicationData);
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasInitialized = useRef(false);
 
-  // Initialize chat when modal opens
+  // Initialize chat only once when modal first opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasInitialized.current) {
       initializeChat();
-    } else {
-      reset();
+      hasInitialized.current = true;
     }
+    // Keep conversation history when closing - don't reset
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -54,10 +55,10 @@ export default function ChatBot({
     onClose();
   };
 
+  // Prevent closing when clicking outside - only X button can close
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
+    // Do nothing - modal stays open
+    e.stopPropagation();
   };
 
   if (!isOpen) return null;
@@ -67,23 +68,12 @@ export default function ChatBot({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between p-4 border-b border-gray-200">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-black mb-1">
-              Resolve Validation Issue
-            </h2>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <p className="text-sm text-gray-700">{redFlag.message}</p>
-            </div>
-            {redFlag.affectedFields && redFlag.affectedFields.length > 0 && (
-              <p className="text-xs text-gray-500 mt-1">
-                Affected fields: {redFlag.affectedFields.join(", ")}
-              </p>
-            )}
-          </div>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-black">
+            Resolve Validation Issue
+          </h2>
           <button
             onClick={handleClose}
             className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -122,17 +112,6 @@ export default function ChatBot({
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                {message.timestamp && (
-                  <p
-                    className={`text-xs mt-1 ${
-                      message.role === "user"
-                        ? "text-blue-100"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </p>
-                )}
               </div>
             </div>
           ))}

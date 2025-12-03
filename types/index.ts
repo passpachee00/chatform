@@ -33,6 +33,7 @@ export interface RedFlag {
   message: string; // Human-readable issue description
   severity?: "low" | "medium" | "high";
   affectedFields: string[]; // Fields involved in the flag
+  debugInfo?: any; // Debug information for troubleshooting
 }
 
 // Validation response from backend

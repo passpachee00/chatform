@@ -9,6 +9,7 @@ interface Rule {
   id: string;
   label: string;
   status: RuleStatus;
+  debugInfo?: any;
 }
 
 export default function MockForm() {
@@ -58,21 +59,18 @@ export default function MockForm() {
       // Update rule statuses based on red flags
       setRules((prevRules) =>
         prevRules.map((rule) => {
-          const hasFlag = result.red_flags.some(
-            (flag: any) => flag.rule === rule.id
+          const flag = result.red_flags.find(
+            (f: any) => f.rule === rule.id
           );
           return {
             ...rule,
-            status: hasFlag ? "fail" : "pass",
+            status: flag ? "fail" : "pass",
+            debugInfo: flag?.debugInfo || null,
           };
         })
       );
 
-      if (result.red_flags.length > 0) {
-        alert(`Found ${result.red_flags.length} red flag(s). Check the validation rules below.`);
-      } else {
-        alert("All validation checks passed! ✅");
-      }
+      // Validation complete - results shown in traffic lights below
     } catch (error) {
       console.error("Error validating application:", error);
       alert("Error validating application. Check console for details.");
@@ -297,22 +295,60 @@ export default function MockForm() {
         </h3>
         <div className="space-y-3">
           {rules.map((rule) => (
-            <div
-              key={rule.id}
-              className="flex items-center gap-3 p-3 rounded-lg bg-gray-50"
-            >
-              {/* Traffic Light Indicator */}
-              <div
-                className={`w-4 h-4 rounded-full flex-shrink-0 ${
-                  rule.status === "pending"
-                    ? "bg-gray-400"
-                    : rule.status === "pass"
-                    ? "bg-green-500"
-                    : "bg-red-500"
-                }`}
-              />
-              {/* Rule Label */}
-              <span className="text-sm text-black">{rule.label}</span>
+            <div key={rule.id} className="space-y-2">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                {/* Traffic Light Indicator */}
+                <div
+                  className={`w-4 h-4 rounded-full flex-shrink-0 ${
+                    rule.status === "pending"
+                      ? "bg-gray-400"
+                      : rule.status === "pass"
+                      ? "bg-green-500"
+                      : "bg-red-500"
+                  }`}
+                />
+                {/* Rule Label */}
+                <span className="text-sm text-black">{rule.label}</span>
+              </div>
+
+              {/* Debug Info Box */}
+              {rule.debugInfo && (
+                <div className="ml-7 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-black">
+                  <div className="font-semibold mb-2">Debug Information:</div>
+                  {rule.debugInfo.currentAddress && (
+                    <div className="mb-1">
+                      <span className="font-medium">Current Address:</span>{" "}
+                      {rule.debugInfo.currentAddress.address}
+                      {rule.debugInfo.currentAddress.lat && (
+                        <span className="text-gray-600">
+                          {" "}
+                          (lat: {rule.debugInfo.currentAddress.lat.toFixed(6)}, lng:{" "}
+                          {rule.debugInfo.currentAddress.lng.toFixed(6)})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {rule.debugInfo.companyAddress && (
+                    <div className="mb-1">
+                      <span className="font-medium">Company Address:</span>{" "}
+                      {rule.debugInfo.companyAddress.address}
+                      {rule.debugInfo.companyAddress.lat && (
+                        <span className="text-gray-600">
+                          {" "}
+                          (lat: {rule.debugInfo.companyAddress.lat.toFixed(6)}, lng:{" "}
+                          {rule.debugInfo.companyAddress.lng.toFixed(6)})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {rule.debugInfo.distance_km !== undefined && (
+                    <div>
+                      <span className="font-medium">Distance:</span>{" "}
+                      {rule.debugInfo.distance_km.toFixed(2)} km
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

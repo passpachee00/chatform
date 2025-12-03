@@ -7,12 +7,6 @@ export default function Home() {
         <div className="bg-white shadow-lg rounded-lg p-8">
           <MockForm />
         </div>
-
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>
-            This is a mock form for testing the validation system.
-          </p>
-        </div>
       </div>
     </div>
   );

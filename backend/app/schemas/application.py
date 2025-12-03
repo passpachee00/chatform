@@ -20,6 +20,7 @@ class RedFlag(BaseModel):
     rule: str
     message: str
     affectedFields: list[str]
+    debugInfo: Optional[dict] = None  # Additional debug information
 
 
 class ValidationResponse(BaseModel):

@@ -26,19 +26,39 @@ class RuleEngine:
         if not current_addr or not company_addr:
             return None
 
-        # Calculate distance using distance service
+        # Geocode addresses to get coordinates
+        current_coords = await self.distance_service.geocode_address(current_addr)
+        company_coords = await self.distance_service.geocode_address(company_addr)
+
+        # Calculate distance
         is_within_limit, distance = await self.distance_service.check_distance_within_limit(
             current_addr,
             company_addr,
             limit_km=150.0
         )
 
+        # Prepare debug info
+        debug_info = {
+            "currentAddress": {
+                "address": current_addr,
+                "lat": current_coords[0] if current_coords else None,
+                "lng": current_coords[1] if current_coords else None
+            },
+            "companyAddress": {
+                "address": company_addr,
+                "lat": company_coords[0] if company_coords else None,
+                "lng": company_coords[1] if company_coords else None
+            },
+            "distance_km": distance
+        }
+
         # If we couldn't calculate distance (geocoding failed)
         if distance is None:
             return RedFlag(
                 rule="distance_check",
                 message="Could not verify addresses. Please ensure both addresses are valid.",
-                affectedFields=["currentAddress", "companyAddress"]
+                affectedFields=["currentAddress", "companyAddress"],
+                debugInfo=debug_info
             )
 
         # If distance exceeds limit
@@ -46,10 +66,11 @@ class RuleEngine:
             return RedFlag(
                 rule="distance_check",
                 message=f"Home and work addresses are {distance:.1f}km apart (limit: 150km)",
-                affectedFields=["currentAddress", "companyAddress"]
+                affectedFields=["currentAddress", "companyAddress"],
+                debugInfo=debug_info
             )
 
-        # Distance is within limit - pass
+        # Distance is within limit - pass (return None for pass, but we could return debug info too)
         return None
 
     async def validate(self, data: ApplicationData) -> List[RedFlag]:

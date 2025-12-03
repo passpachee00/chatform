@@ -12,8 +12,5 @@
       "dest": "backend/app/main.py"
     }
   ],
-  "env": {
-    "GOOGLE_MAPS_API_KEY": "@google_maps_api_key",
-    "CORS_ORIGINS": "https://your-app.vercel.app"
-  }
+  "env": {}
 }

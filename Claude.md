@@ -58,9 +58,10 @@ ChatForm is an intelligent form validation system that combines rule-based valid
 - **HTTP Client**: httpx (for external API calls)
 
 ### Infrastructure
-- **Frontend Deployment**: Vercel
-- **Backend Deployment**: Vercel
+- **Frontend Deployment**: Vercel (https://chatform.vercel.app)
+- **Backend Deployment**: Railway (https://chatform-production-236e.up.railway.app)
 - **Database**: None (Phase 1 - in-memory only)
+- **Architecture**: Split deployment - frontend and backend on separate platforms
 
 ---
 

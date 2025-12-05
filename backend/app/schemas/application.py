@@ -5,6 +5,8 @@ from datetime import datetime
 
 class ApplicationData(BaseModel):
     """Application form data"""
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
     currentAddress: Optional[str] = None
     occupation: Optional[str] = None
     jobTitle: Optional[str] = None

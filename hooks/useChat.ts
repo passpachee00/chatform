@@ -16,6 +16,7 @@ interface UseChatReturn {
   sendMessage: (userMessage: string) => Promise<void>;
   initializeChat: () => Promise<void>;
   reset: () => void;
+  restoreMessages: (restoredMessages: ChatMessage[]) => void;
 }
 
 export function useChat(
@@ -30,6 +31,8 @@ export function useChat(
   // Use refs to keep track of current values for use in callbacks
   const messagesRef = useRef<ChatMessage[]>([]);
   const isInitializedRef = useRef(false);
+  const redFlagRef = useRef<RedFlag>(redFlag);
+  const applicationDataRef = useRef<ApplicationData>(applicationData);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -41,6 +44,14 @@ export function useChat(
   useEffect(() => {
     isInitializedRef.current = isInitialized;
   }, [isInitialized]);
+
+  useEffect(() => {
+    redFlagRef.current = redFlag;
+  }, [redFlag]);
+
+  useEffect(() => {
+    applicationDataRef.current = applicationData;
+  }, [applicationData]);
 
   // Initialize chat with first message from assistant
   const initializeChat = useCallback(async () => {
@@ -57,8 +68,8 @@ export function useChat(
         },
         body: JSON.stringify({
           message: "", // Empty message signals initialization
-          redFlag,
-          applicationData,
+          redFlag: redFlagRef.current,
+          applicationData: applicationDataRef.current,
           conversationHistory: [],
         }),
         signal: AbortSignal.timeout(30000), // 30 second timeout
@@ -121,8 +132,8 @@ export function useChat(
           },
           body: JSON.stringify({
             message: userMessage,
-            redFlag,
-            applicationData,
+            redFlag: redFlagRef.current,
+            applicationData: applicationDataRef.current,
             conversationHistory: [...currentMessages, newUserMessage],
           }),
           signal: AbortSignal.timeout(30000), // 30 second timeout
@@ -170,6 +181,14 @@ export function useChat(
     isInitializedRef.current = false;
   }, []);
 
+  // Restore chat state from saved conversation
+  const restoreMessages = useCallback((restoredMessages: ChatMessage[]) => {
+    setMessages(restoredMessages);
+    setIsInitialized(restoredMessages.length > 0);
+    messagesRef.current = restoredMessages;
+    isInitializedRef.current = restoredMessages.length > 0;
+  }, []);
+
   return {
     messages,
     isLoading,
@@ -177,5 +196,6 @@ export function useChat(
     sendMessage,
     initializeChat,
     reset,
+    restoreMessages,
   };
 }

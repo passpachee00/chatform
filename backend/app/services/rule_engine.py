@@ -1,5 +1,6 @@
 from app.schemas.application import ApplicationData, RedFlag
 from app.services.distance_service import DistanceService
+from app.services.blacklist_service import BlacklistService
 from typing import List
 
 
@@ -8,6 +9,7 @@ class RuleEngine:
 
     def __init__(self):
         self.distance_service = DistanceService()
+        self.blacklist_service = BlacklistService()
 
     async def check_distance_rule(self, data: ApplicationData) -> RedFlag | None:
         """
@@ -73,6 +75,39 @@ class RuleEngine:
         # Distance is within limit - pass (return None for pass, but we could return debug info too)
         return None
 
+    async def check_blacklist_rule(self, data: ApplicationData) -> RedFlag | None:
+        """
+        Check if applicant's name appears in blacklist
+
+        Args:
+            data: Application data
+
+        Returns:
+            RedFlag if name is blacklisted, None if passes
+        """
+        first_name = data.firstName
+        last_name = data.lastName
+
+        # Skip if either name is missing
+        if not first_name or not last_name:
+            return None
+
+        # Check if name is blacklisted
+        is_blacklisted = await self.blacklist_service.is_blacklisted(
+            first_name,
+            last_name
+        )
+
+        if is_blacklisted:
+            return RedFlag(
+                rule="blacklist_check",
+                message=f"Name '{first_name} {last_name}' appears in restricted list",
+                affectedFields=["firstName", "lastName"]
+            )
+
+        # Name not blacklisted - pass
+        return None
+
     async def validate(self, data: ApplicationData) -> List[RedFlag]:
         """
         Run all validation rules on application data
@@ -84,6 +119,11 @@ class RuleEngine:
             List of red flags (empty if all rules pass)
         """
         red_flags = []
+
+        # Run blacklist check
+        blacklist_flag = await self.check_blacklist_rule(data)
+        if blacklist_flag:
+            red_flags.append(blacklist_flag)
 
         # Run distance check
         distance_flag = await self.check_distance_rule(data)

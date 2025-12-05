@@ -17,11 +17,52 @@ export default function ChatBot({
   isOpen,
   onClose,
 }: ChatBotProps) {
-  const { messages, isLoading, error, sendMessage, initializeChat } =
-    useChat(redFlag, applicationData);
+  const {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    initializeChat,
+    reset,
+    restoreMessages,
+  } = useChat(redFlag, applicationData);
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
+  const currentRedFlagRule = useRef(redFlag.rule);
+  // Store separate conversation history for each red flag
+  const conversationHistory = useRef<Map<string, ChatMessage[]>>(new Map());
+
+  // Save/restore conversations when switching between red flags
+  useEffect(() => {
+    // Only act when switching between different non-empty rules
+    if (
+      redFlag.rule &&
+      currentRedFlagRule.current &&
+      redFlag.rule !== currentRedFlagRule.current
+    ) {
+      // Save current conversation before switching
+      if (currentRedFlagRule.current && messages.length > 0) {
+        conversationHistory.current.set(currentRedFlagRule.current, [
+          ...messages,
+        ]);
+      }
+
+      // Restore saved conversation or start fresh
+      const savedConversation = conversationHistory.current.get(redFlag.rule);
+      if (savedConversation && savedConversation.length > 0) {
+        restoreMessages(savedConversation);
+        hasInitialized.current = true;
+      } else {
+        reset();
+        hasInitialized.current = false;
+      }
+    }
+    // Update current rule tracker only for non-empty rules
+    if (redFlag.rule) {
+      currentRedFlagRule.current = redFlag.rule;
+    }
+  }, [redFlag.rule, messages, reset, restoreMessages]);
 
   // Initialize chat only once when modal first opens
   useEffect(() => {

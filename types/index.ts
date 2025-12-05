@@ -1,6 +1,8 @@
 // Application data structure
 export interface ApplicationData {
   // Personal Info
+  firstName?: string;
+  lastName?: string;
   currentAddress?: string;
 
   // Job Section

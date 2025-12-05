@@ -16,6 +16,8 @@ interface Rule {
 
 export default function MockForm() {
   const [formData, setFormData] = useState<ApplicationData>({
+    firstName: "",
+    lastName: "",
     currentAddress: "",
     occupation: "",
     jobTitle: "",
@@ -30,8 +32,9 @@ export default function MockForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [rules, setRules] = useState<Rule[]>([
-    // { id: "company_exists", label: "Company Existence Check", status: "pending" },
+    { id: "blacklist_check", label: "Blacklist Name Check", status: "pending" },
     { id: "distance_check", label: "Address Distance Check", status: "pending" },
+    // { id: "company_exists", label: "Company Existence Check", status: "pending" },
     // { id: "income_plausibility", label: "Income Plausibility Check", status: "pending" },
     // { id: "contradictions", label: "Field Contradictions Check", status: "pending" },
   ]);
@@ -41,6 +44,8 @@ export default function MockForm() {
   // Stabilize object references to prevent chat from resetting
   const stableRedFlag = useMemo(() => activeRedFlag, [activeRedFlag?.rule]);
   const stableFormData = useMemo(() => formData, [
+    formData.firstName,
+    formData.lastName,
     formData.currentAddress,
     formData.occupation,
     formData.jobTitle,
@@ -121,6 +126,42 @@ export default function MockForm() {
         <h2 className="text-2xl font-semibold text-black">
           Personal Information
         </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="firstName"
+              className="block text-sm font-medium text-black mb-1"
+            >
+              First Name
+            </label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+              placeholder="John"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="lastName"
+              className="block text-sm font-medium text-black mb-1"
+            >
+              Last Name
+            </label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+              placeholder="Doe"
+            />
+          </div>
+        </div>
         <div>
           <label
             htmlFor="currentAddress"

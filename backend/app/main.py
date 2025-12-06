@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.routers import validation, chat
+from app.routers import validation, chat, prescreening
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +31,7 @@ app.add_middleware(
 # Include routers
 app.include_router(validation.router, prefix="/api", tags=["validation"])
 app.include_router(chat.router, prefix="/api", tags=["chat"])
+app.include_router(prescreening.router, prefix="/api", tags=["prescreening"])
 
 
 @app.get("/")

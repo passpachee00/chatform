@@ -108,6 +108,38 @@ class RuleEngine:
         # Name not blacklisted - pass
         return None
 
+    async def check_political_exposure_rule(self, data: ApplicationData) -> RedFlag | None:
+        """
+        Check if applicant has political exposure requiring review
+
+        Args:
+            data: Application data
+
+        Returns:
+            RedFlag if political exposure detected, None otherwise
+        """
+        # Get pre-screening data
+        pre_screening = data.preScreening
+
+        # Skip if not answered or answered "no"
+        if not pre_screening or pre_screening.response != 'yes':
+            return None
+
+        # If answered "yes", always flag for manual review
+        # (even if explanation provided - compliance requirement)
+        explanation_preview = pre_screening.explanation[:100] if pre_screening.explanation else ""
+
+        return RedFlag(
+            rule="political_exposure_check",
+            message=f"Applicant indicated political exposure: {explanation_preview}...",
+            affectedFields=["preScreening"],
+            debugInfo={
+                "response": pre_screening.response,
+                "explanation": pre_screening.explanation,
+                "chatMessageCount": len(pre_screening.chatHistory) if pre_screening.chatHistory else 0
+            }
+        )
+
     async def validate(self, data: ApplicationData) -> List[RedFlag]:
         """
         Run all validation rules on application data
@@ -129,6 +161,11 @@ class RuleEngine:
         distance_flag = await self.check_distance_rule(data)
         if distance_flag:
             red_flags.append(distance_flag)
+
+        # Run political exposure check
+        political_flag = await self.check_political_exposure_rule(data)
+        if political_flag:
+            red_flags.append(political_flag)
 
         # Add more rules here in the future
         # e.g., company_exists_flag = await self.check_company_exists(data)

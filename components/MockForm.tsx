@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { ApplicationData, RedFlag } from "@/types";
+import type { ApplicationData, RedFlag, PreScreeningData, ChatMessage } from "@/types";
 import ChatBot from "./ChatBot";
+import { PreScreeningSection } from "./PreScreeningSection";
+import { PreScreeningChatModal } from "./PreScreeningChatModal";
 
 type RuleStatus = "pending" | "pass" | "fail";
 
@@ -34,12 +36,22 @@ export default function MockForm() {
   const [rules, setRules] = useState<Rule[]>([
     { id: "blacklist_check", label: "Blacklist Name Check", status: "pending" },
     { id: "distance_check", label: "Address Distance Check", status: "pending" },
+    { id: "political_exposure_check", label: "Political Exposure Check", status: "pending" },
     // { id: "company_exists", label: "Company Existence Check", status: "pending" },
     // { id: "income_plausibility", label: "Income Plausibility Check", status: "pending" },
     // { id: "contradictions", label: "Field Contradictions Check", status: "pending" },
   ]);
 
   const [activeRedFlag, setActiveRedFlag] = useState<RedFlag | null>(null);
+
+  const [preScreeningData, setPreScreeningData] = useState<PreScreeningData>({
+    answered: false,
+    response: null,
+    explanation: "",
+    chatHistory: [],
+  });
+
+  const [isPreScreeningChatOpen, setIsPreScreeningChatOpen] = useState(false);
 
   // Stabilize object references to prevent chat from resetting
   const stableRedFlag = useMemo(() => activeRedFlag, [activeRedFlag?.rule]);
@@ -69,7 +81,17 @@ export default function MockForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          // Add pre-screening data
+          preScreening: preScreeningData.answered
+            ? {
+                response: preScreeningData.response,
+                explanation: preScreeningData.explanation,
+                chatHistory: preScreeningData.chatHistory,
+              }
+            : null,
+        }),
       });
 
       if (!response.ok) {
@@ -117,6 +139,33 @@ export default function MockForm() {
             : Number(value)
           : value,
     }));
+  };
+
+  const handlePreScreeningResponse = (response: "yes" | "no") => {
+    if (response === "no") {
+      setPreScreeningData({
+        answered: true,
+        response: "no",
+        explanation: "",
+        chatHistory: [],
+      });
+    } else {
+      // Open chat modal for explanation
+      setIsPreScreeningChatOpen(true);
+    }
+  };
+
+  const handlePreScreeningChatComplete = (
+    explanation: string,
+    chatHistory: ChatMessage[]
+  ) => {
+    setPreScreeningData({
+      answered: true,
+      response: "yes",
+      explanation,
+      chatHistory,
+    });
+    setIsPreScreeningChatOpen(false);
   };
 
   return (
@@ -337,6 +386,13 @@ export default function MockForm() {
         </div>
       </section>
 
+      {/* Pre-Screening Section */}
+      <PreScreeningSection
+        data={preScreeningData}
+        onResponseChange={handlePreScreeningResponse}
+        onChatComplete={handlePreScreeningChatComplete}
+      />
+
       {/* Submit Button */}
       <div className="flex justify-end">
         <button
@@ -430,6 +486,14 @@ export default function MockForm() {
         applicationData={stableFormData}
         isOpen={!!activeRedFlag}
         onClose={() => setActiveRedFlag(null)}
+      />
+
+      {/* Pre-screening Chat Modal */}
+      <PreScreeningChatModal
+        isOpen={isPreScreeningChatOpen}
+        onClose={() => setIsPreScreeningChatOpen(false)}
+        onComplete={handlePreScreeningChatComplete}
+        initialHistory={preScreeningData.chatHistory}
       />
     </form>
   );

@@ -17,6 +17,13 @@ export interface ApplicationData {
   currentAssets?: number;
   countryIncomeSources?: string;
 
+  // Pre-screening data
+  preScreening?: {
+    response: "yes" | "no";
+    explanation: string;
+    chatHistory: ChatMessage[];
+  } | null;
+
   // System fields (added during resolution)
   justifications?: {
     [field: string]: string; // field -> explanation
@@ -27,6 +34,14 @@ export interface ApplicationData {
       newValue: string;
     };
   };
+}
+
+// Pre-screening data (for frontend state management)
+export interface PreScreeningData {
+  answered: boolean;
+  response: "yes" | "no" | null;
+  explanation: string;
+  chatHistory: ChatMessage[];
 }
 
 // Red flag structure

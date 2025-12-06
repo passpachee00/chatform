@@ -1,6 +1,13 @@
 from pydantic import BaseModel
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from datetime import datetime
+
+
+class PreScreeningData(BaseModel):
+    """Pre-screening data structure"""
+    response: Literal["yes", "no"]
+    explanation: str
+    chatHistory: List[dict]  # List of ChatMessage dicts
 
 
 class ApplicationData(BaseModel):
@@ -16,6 +23,9 @@ class ApplicationData(BaseModel):
     incomeSource: Optional[str] = None
     currentAssets: Optional[float] = None
     countryIncomeSources: Optional[str] = None
+
+    # Pre-screening field
+    preScreening: Optional[PreScreeningData] = None
 
 
 class RedFlag(BaseModel):

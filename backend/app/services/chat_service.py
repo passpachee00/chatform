@@ -189,3 +189,39 @@ Key points:
             # Log error (in production, use proper logging)
             print(f"Error calling OpenAI API: {e}")
             raise Exception(f"Failed to get AI response: {str(e)}")
+
+    async def get_completion(self, messages: List[Dict[str, str]]) -> str:
+        """
+        Generic method to get completion from OpenAI
+
+        Args:
+            messages: List of message dicts with role/content
+                     (should include system prompt if needed)
+
+        Returns:
+            Assistant's response content
+
+        Raises:
+            Exception: If API call fails
+        """
+        try:
+            # Call OpenAI API with provided messages
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                max_tokens=self.max_tokens,
+                temperature=0.5,
+            )
+
+            # Extract response content
+            assistant_message = response.choices[0].message.content
+
+            if not assistant_message:
+                raise ValueError("Empty response from OpenAI")
+
+            return assistant_message
+
+        except Exception as e:
+            # Log error (in production, use proper logging)
+            print(f"Error calling OpenAI API: {e}")
+            raise Exception(f"Failed to get AI response: {str(e)}")

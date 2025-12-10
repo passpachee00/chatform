@@ -10,6 +10,7 @@ export interface ApplicationData {
   jobTitle?: string;
   companyName?: string;
   companyAddress?: string;
+  companyWebsite?: string;
 
   // Income Section
   monthlyIncome?: number;

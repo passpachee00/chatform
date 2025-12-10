@@ -25,6 +25,7 @@ export default function MockForm() {
     jobTitle: "",
     companyName: "",
     companyAddress: "",
+    companyWebsite: "",
     monthlyIncome: undefined,
     incomeSource: "",
     currentAssets: undefined,
@@ -37,6 +38,7 @@ export default function MockForm() {
     { id: "blacklist_check", label: "Blacklist Name Check", status: "pending" },
     { id: "distance_check", label: "Address Distance Check", status: "pending" },
     { id: "political_exposure_check", label: "Political Exposure Check", status: "pending" },
+    { id: "employer_verification_check", label: "Employer Verification", status: "pending" },
     // { id: "company_exists", label: "Company Existence Check", status: "pending" },
     // { id: "income_plausibility", label: "Income Plausibility Check", status: "pending" },
     // { id: "contradictions", label: "Field Contradictions Check", status: "pending" },
@@ -63,6 +65,7 @@ export default function MockForm() {
     formData.jobTitle,
     formData.companyName,
     formData.companyAddress,
+    formData.companyWebsite,
     formData.monthlyIncome,
     formData.incomeSource,
     formData.currentAssets,
@@ -305,6 +308,23 @@ export default function MockForm() {
             placeholder="456 Office Rd, City, Country"
           />
         </div>
+        <div>
+          <label
+            htmlFor="companyWebsite"
+            className="block text-sm font-medium text-black mb-1"
+          >
+            Company Website (Optional)
+          </label>
+          <input
+            type="url"
+            id="companyWebsite"
+            name="companyWebsite"
+            value={formData.companyWebsite}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+            placeholder="https://example.com"
+          />
+        </div>
       </section>
 
       {/* Income Section */}
@@ -468,9 +488,45 @@ export default function MockForm() {
                     </div>
                   )}
                   {rule.debugInfo.distance_km !== undefined && (
-                    <div>
+                    <div className="mb-1">
                       <span className="font-medium">Distance:</span>{" "}
                       {rule.debugInfo.distance_km.toFixed(2)} km
+                    </div>
+                  )}
+                  {rule.debugInfo.perplexity_details && (
+                    <div className="mt-2 pt-2 border-t border-blue-300">
+                      <div className="font-medium mb-1">Perplexity AI Verification:</div>
+                      <div className="mb-1">
+                        <span className="font-medium">Result:</span>{" "}
+                        <span className={rule.debugInfo.perplexity_details.result === "YES" ? "text-green-600" : "text-red-600"}>
+                          {rule.debugInfo.perplexity_details.result}
+                        </span>
+                      </div>
+                      {rule.debugInfo.perplexity_details.explanation && (
+                        <div className="mb-1">
+                          <span className="font-medium">Explanation:</span>{" "}
+                          {rule.debugInfo.perplexity_details.explanation}
+                        </div>
+                      )}
+                      {rule.debugInfo.perplexity_details.closest_company_name && (
+                        <div className="mb-1">
+                          <span className="font-medium">Matched Company:</span>{" "}
+                          {rule.debugInfo.perplexity_details.closest_company_name}
+                        </div>
+                      )}
+                      {rule.debugInfo.perplexity_details.closest_company_website && (
+                        <div>
+                          <span className="font-medium">Website:</span>{" "}
+                          <a
+                            href={rule.debugInfo.perplexity_details.closest_company_website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {rule.debugInfo.perplexity_details.closest_company_website}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

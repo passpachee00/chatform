@@ -1,6 +1,7 @@
 from app.schemas.application import ApplicationData, RedFlag
 from app.services.distance_service import DistanceService
 from app.services.blacklist_service import BlacklistService
+from app.services.employer_verification_service import EmployerVerificationService
 from typing import List
 
 
@@ -10,6 +11,7 @@ class RuleEngine:
     def __init__(self):
         self.distance_service = DistanceService()
         self.blacklist_service = BlacklistService()
+        self.employer_verification_service = EmployerVerificationService()
 
     async def check_distance_rule(self, data: ApplicationData) -> RedFlag | None:
         """
@@ -140,6 +142,40 @@ class RuleEngine:
             }
         )
 
+    async def check_employer_verification_rule(self, data: ApplicationData) -> RedFlag | None:
+        """
+        Verify employer legitimacy through multiple sources
+
+        Args:
+            data: Application data
+
+        Returns:
+            RedFlag if employer cannot be verified, None if passes
+        """
+        company_name = data.companyName
+        company_website = data.companyWebsite
+
+        # Skip if company name is missing
+        if not company_name or not company_name.strip():
+            return None
+
+        # Run verification
+        result = await self.employer_verification_service.verify_employer(
+            company_name,
+            company_website
+        )
+
+        if not result["passed"]:
+            return RedFlag(
+                rule="employer_verification_check",
+                message=f"Could not verify employer '{company_name}'",
+                affectedFields=["companyName", "companyWebsite"],
+                debugInfo=result
+            )
+
+        # Verification passed
+        return None
+
     async def validate(self, data: ApplicationData) -> List[RedFlag]:
         """
         Run all validation rules on application data
@@ -167,7 +203,12 @@ class RuleEngine:
         if political_flag:
             red_flags.append(political_flag)
 
+        # Run employer verification check
+        employer_flag = await self.check_employer_verification_rule(data)
+        if employer_flag:
+            red_flags.append(employer_flag)
+
         # Add more rules here in the future
-        # e.g., company_exists_flag = await self.check_company_exists(data)
+        # e.g., income_plausibility_flag = await self.check_income_plausibility(data)
 
         return red_flags

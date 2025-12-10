@@ -19,6 +19,7 @@ class ApplicationData(BaseModel):
     jobTitle: Optional[str] = None
     companyName: Optional[str] = None
     companyAddress: Optional[str] = None
+    companyWebsite: Optional[str] = None
     monthlyIncome: Optional[float] = None
     incomeSource: Optional[str] = None
     currentAssets: Optional[float] = None

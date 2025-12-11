@@ -481,11 +481,16 @@ export default function MockForm() {
                     <div className="mb-1">
                       <span className="font-medium">Current Address:</span>{" "}
                       {rule.debugInfo.currentAddress.address}
-                      {rule.debugInfo.currentAddress.lat && (
+                      {rule.debugInfo.currentAddress.lat !== null &&
+                       rule.debugInfo.currentAddress.lng !== null ? (
                         <span className="text-gray-600">
                           {" "}
                           (lat: {rule.debugInfo.currentAddress.lat.toFixed(6)}, lng:{" "}
                           {rule.debugInfo.currentAddress.lng.toFixed(6)})
+                        </span>
+                      ) : (
+                        <span className="text-red-600 text-xs">
+                          {" "}[Google: {rule.debugInfo.currentAddress.google_status || "FAILED"}]
                         </span>
                       )}
                     </div>
@@ -494,11 +499,16 @@ export default function MockForm() {
                     <div className="mb-1">
                       <span className="font-medium">Company Address:</span>{" "}
                       {rule.debugInfo.companyAddress.address}
-                      {rule.debugInfo.companyAddress.lat && (
+                      {rule.debugInfo.companyAddress.lat !== null &&
+                       rule.debugInfo.companyAddress.lng !== null ? (
                         <span className="text-gray-600">
                           {" "}
                           (lat: {rule.debugInfo.companyAddress.lat.toFixed(6)}, lng:{" "}
                           {rule.debugInfo.companyAddress.lng.toFixed(6)})
+                        </span>
+                      ) : (
+                        <span className="text-red-600 text-xs">
+                          {" "}[Google: {rule.debugInfo.companyAddress.google_status || "FAILED"}]
                         </span>
                       )}
                     </div>
@@ -506,7 +516,11 @@ export default function MockForm() {
                   {rule.debugInfo.distance_km !== undefined && (
                     <div className="mb-1">
                       <span className="font-medium">Distance:</span>{" "}
-                      {rule.debugInfo.distance_km.toFixed(2)} km
+                      {rule.debugInfo.distance_km !== null ? (
+                        <span>{rule.debugInfo.distance_km.toFixed(2)} km</span>
+                      ) : (
+                        <span className="text-red-600 text-xs">N/A (geocoding failed)</span>
+                      )}
                     </div>
                   )}
                   {rule.debugInfo.perplexity_details && (

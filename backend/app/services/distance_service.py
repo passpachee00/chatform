@@ -11,7 +11,7 @@ class DistanceService:
         self.api_key = os.getenv("GOOGLE_MAPS_API_KEY")
         self.geocode_url = "https://maps.googleapis.com/maps/api/geocode/json"
 
-    async def geocode_address(self, address: str) -> Optional[Tuple[float, float]]:
+    async def geocode_address(self, address: str) -> Tuple[Optional[Tuple[float, float]], str]:
         """
         Convert address to (latitude, longitude) using Google Geocoding API
 
@@ -19,10 +19,15 @@ class DistanceService:
             address: Address string to geocode
 
         Returns:
-            Tuple of (lat, lng) or None if geocoding fails
+            Tuple of ((lat, lng) or None, google_status_code)
+            Examples:
+            - Success: ((13.7563, 100.5018), "OK")
+            - Failure: (None, "ZERO_RESULTS")
+            - Error: (None, "REQUEST_DENIED")
+            - Empty: (None, "EMPTY_ADDRESS")
         """
         if not address or not address.strip():
-            return None
+            return (None, "EMPTY_ADDRESS")
 
         params = {
             "address": address,
@@ -37,20 +42,22 @@ class DistanceService:
 
                 if data["status"] == "OK" and len(data["results"]) > 0:
                     location = data["results"][0]["geometry"]["location"]
-                    return (location["lat"], location["lng"])
+                    return ((location["lat"], location["lng"]), "OK")
                 else:
-                    print(f"Geocoding failed for '{address}': {data.get('status')}")
-                    return None
+                    # Return Google's actual error status
+                    google_status = data.get("status", "UNKNOWN_ERROR")
+                    print(f"Geocoding failed for '{address}': {google_status}")
+                    return (None, google_status)
 
             except Exception as e:
                 print(f"Error geocoding address '{address}': {e}")
-                return None
+                return (None, "UNKNOWN_ERROR")
 
     async def calculate_distance(
         self,
         address_a: str,
         address_b: str
-    ) -> Optional[float]:
+    ) -> Tuple[Optional[float], str, str]:
         """
         Calculate straight-line distance (in km) between two addresses
 
@@ -59,26 +66,29 @@ class DistanceService:
             address_b: Second address
 
         Returns:
-            Distance in kilometers, or None if geocoding fails
+            Tuple of (distance_km or None, status_a, status_b)
+            Examples:
+            - Success: (15.5, "OK", "OK")
+            - Failure: (None, "ZERO_RESULTS", "OK")
         """
         # Geocode both addresses
-        coords_a = await self.geocode_address(address_a)
-        coords_b = await self.geocode_address(address_b)
+        coords_a, status_a = await self.geocode_address(address_a)
+        coords_b, status_b = await self.geocode_address(address_b)
 
         if not coords_a or not coords_b:
-            return None
+            return (None, status_a, status_b)
 
         # Calculate geodesic distance
         distance_km = geodesic(coords_a, coords_b).kilometers
 
-        return distance_km
+        return (distance_km, status_a, status_b)
 
     async def check_distance_within_limit(
         self,
         address_a: str,
         address_b: str,
         limit_km: float = 150.0
-    ) -> Tuple[bool, Optional[float]]:
+    ) -> Tuple[bool, Optional[float], str, str]:
         """
         Check if two addresses are within the specified distance limit
 
@@ -88,13 +98,13 @@ class DistanceService:
             limit_km: Maximum allowed distance in km (default: 150)
 
         Returns:
-            Tuple of (is_within_limit, actual_distance_km)
+            Tuple of (is_within_limit, actual_distance_km, status_a, status_b)
         """
-        distance = await self.calculate_distance(address_a, address_b)
+        distance, status_a, status_b = await self.calculate_distance(address_a, address_b)
 
         if distance is None:
             # If we can't calculate distance, we can't verify
-            return (False, None)
+            return (False, None, status_a, status_b)
 
         is_within_limit = distance <= limit_km
-        return (is_within_limit, distance)
+        return (is_within_limit, distance, status_a, status_b)

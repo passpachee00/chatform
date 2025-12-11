@@ -3,6 +3,22 @@ from app.services.distance_service import DistanceService
 from app.services.blacklist_service import BlacklistService
 from app.services.employer_verification_service import EmployerVerificationService
 from typing import List
+import asyncio
+
+
+# Source of Funds alignment matrix
+# Maps employment type -> allowed source of funds
+SOURCE_OF_FUNDS_ALIGNMENT = {
+    "Business Owner": ["Inheritance", "Savings", "Investments", "Pension", "Business Income"],
+    "Government Officer": ["Salary", "Inheritance", "Savings", "Investments", "Pension"],
+    "Self-Employed": ["Inheritance", "Savings", "Investments", "Pension", "Business Income"],
+    "State Enterprise Officer": ["Salary", "Inheritance", "Savings", "Investments", "Pension"],
+    "Freelancer": ["Inheritance", "Savings", "Investments", "Pension", "Salary"],
+    "Student": ["Inheritance", "Savings", "Investments"],
+    "Company Employee": ["Salary", "Inheritance", "Savings", "Investments"],
+    "Politician": ["Salary", "Inheritance", "Savings", "Investments", "Pension"],
+    "Unemployed": ["Inheritance", "Savings", "Investments", "Pension"],
+}
 
 
 class RuleEngine:
@@ -176,9 +192,54 @@ class RuleEngine:
         # Verification passed
         return None
 
+    async def check_source_of_funds_alignment_rule(self, data: ApplicationData) -> RedFlag | None:
+        """
+        Check if source of funds aligns with employment type
+
+        Args:
+            data: Application data
+
+        Returns:
+            RedFlag if misalignment detected, None if passes
+        """
+        employment_type = data.employmentType
+        source_of_funds = data.sourceOfFunds
+
+        # Skip if either field is missing or empty
+        if not employment_type or not employment_type.strip():
+            return None
+        if not source_of_funds or not source_of_funds.strip():
+            return None
+
+        # Normalize
+        employment_type = employment_type.strip()
+        source_of_funds = source_of_funds.strip()
+
+        # Check employment type exists in matrix
+        if employment_type not in SOURCE_OF_FUNDS_ALIGNMENT:
+            return RedFlag(
+                rule="source_of_funds_alignment_check",
+                message=f"Unable to validate source of funds alignment for employment type '{employment_type}'",
+                affectedFields=["employmentType", "sourceOfFunds"],
+                debugInfo={"employmentType": employment_type, "sourceOfFunds": source_of_funds, "reason": "unknown_employment_type"}
+            )
+
+        allowed_sources = SOURCE_OF_FUNDS_ALIGNMENT[employment_type]
+
+        # Check if source of funds is in allowed list
+        if source_of_funds not in allowed_sources:
+            return RedFlag(
+                rule="source_of_funds_alignment_check",
+                message=f"The source of funds '{source_of_funds}' doesn't typically align with employment type '{employment_type}'. Can you provide more details?",
+                affectedFields=["employmentType", "sourceOfFunds"],
+                debugInfo={"employmentType": employment_type, "sourceOfFunds": source_of_funds, "allowedSources": allowed_sources}
+            )
+
+        return None
+
     async def validate(self, data: ApplicationData) -> List[RedFlag]:
         """
-        Run all validation rules on application data
+        Run all validation rules on application data in parallel
 
         Args:
             data: Application data to validate
@@ -186,29 +247,16 @@ class RuleEngine:
         Returns:
             List of red flags (empty if all rules pass)
         """
-        red_flags = []
+        # Run all validation rules in parallel for better performance
+        results = await asyncio.gather(
+            self.check_blacklist_rule(data),
+            self.check_employer_verification_rule(data),
+            self.check_distance_rule(data),
+            self.check_political_exposure_rule(data),
+            self.check_source_of_funds_alignment_rule(data),
+        )
 
-        # Run blacklist check
-        blacklist_flag = await self.check_blacklist_rule(data)
-        if blacklist_flag:
-            red_flags.append(blacklist_flag)
-
-        # Run distance check
-        distance_flag = await self.check_distance_rule(data)
-        if distance_flag:
-            red_flags.append(distance_flag)
-
-        # Run political exposure check
-        political_flag = await self.check_political_exposure_rule(data)
-        if political_flag:
-            red_flags.append(political_flag)
-
-        # Run employer verification check
-        employer_flag = await self.check_employer_verification_rule(data)
-        if employer_flag:
-            red_flags.append(employer_flag)
-
-        # Add more rules here in the future
-        # e.g., income_plausibility_flag = await self.check_income_plausibility(data)
+        # Filter out None values (passed validations)
+        red_flags = [flag for flag in results if flag is not None]
 
         return red_flags

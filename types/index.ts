@@ -6,7 +6,7 @@ export interface ApplicationData {
   currentAddress?: string;
 
   // Job Section
-  occupation?: string;
+  employmentType?: string;
   jobTitle?: string;
   companyName?: string;
   companyAddress?: string;
@@ -14,7 +14,7 @@ export interface ApplicationData {
 
   // Income Section
   monthlyIncome?: number;
-  incomeSource?: string;
+  sourceOfFunds?: string;
   currentAssets?: number;
   countryIncomeSources?: string;
 

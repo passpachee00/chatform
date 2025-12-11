@@ -15,13 +15,13 @@ class ApplicationData(BaseModel):
     firstName: Optional[str] = None
     lastName: Optional[str] = None
     currentAddress: Optional[str] = None
-    occupation: Optional[str] = None
+    employmentType: Optional[str] = None
     jobTitle: Optional[str] = None
     companyName: Optional[str] = None
     companyAddress: Optional[str] = None
     companyWebsite: Optional[str] = None
     monthlyIncome: Optional[float] = None
-    incomeSource: Optional[str] = None
+    sourceOfFunds: Optional[str] = None
     currentAssets: Optional[float] = None
     countryIncomeSources: Optional[str] = None
 

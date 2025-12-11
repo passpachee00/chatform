@@ -52,16 +52,16 @@ class ChatService:
                 context_parts.append(f"Current Address: {app_data.currentAddress}")
             if app_data.companyAddress:
                 context_parts.append(f"Company Address: {app_data.companyAddress}")
-            if app_data.occupation:
-                context_parts.append(f"Occupation: {app_data.occupation}")
+            if app_data.employmentType:
+                context_parts.append(f"Employment Type: {app_data.employmentType}")
             if app_data.jobTitle:
                 context_parts.append(f"Job Title: {app_data.jobTitle}")
             if app_data.companyName:
                 context_parts.append(f"Company Name: {app_data.companyName}")
             if app_data.monthlyIncome:
                 context_parts.append(f"Monthly Income: ${app_data.monthlyIncome:,.2f}")
-            if app_data.incomeSource:
-                context_parts.append(f"Income Source: {app_data.incomeSource}")
+            if app_data.sourceOfFunds:
+                context_parts.append(f"Source of Funds: {app_data.sourceOfFunds}")
             if app_data.currentAssets:
                 context_parts.append(f"Current Assets: ${app_data.currentAssets:,.2f}")
             if app_data.countryIncomeSources:
@@ -188,6 +188,53 @@ IMPORTANT: You have access to a TOOL called `verify_employer` that can check if 
   * If it says "not found" → ask if they have a website or registration details
 - If user gives reasonable explanation but tool still fails after multiple attempts, document their explanation
 - Multiple attempts with corrected information are encouraged"""
+
+        elif red_flag.rule == "source_of_funds_alignment_check":
+            # Build alignment matrix table for AI reference
+            from app.services.rule_engine import SOURCE_OF_FUNDS_ALIGNMENT
+
+            alignment_matrix = "\n".join([
+                f"  - {emp_type}: {', '.join(sources)}"
+                for emp_type, sources in SOURCE_OF_FUNDS_ALIGNMENT.items()
+            ])
+
+            system_prompt += f"""
+
+**Rule-Specific Guidance for Source of Funds Alignment:**
+
+**Context - What Triggered This Flag:**
+- Employment Type: {app_data.employmentType or "(not provided)"}
+- Source of Funds: {app_data.sourceOfFunds or "(not provided)"}
+
+**Alignment Matrix (Reference):**
+{alignment_matrix}
+
+**Your Goal:**
+Match these two variables: Employment Type ↔ Source of Funds
+
+**Your Approach:**
+1. Mention both employment type and source of funds as the cause
+2. Ask for clarification on employment type, source of funds, or both
+3. Use common sense to determine if explanation is legitimate
+4. Help classify ambiguous employment types (e.g., "Freelance golf caddie" → ask clarifying questions to determine if Freelancer or Self-Employed)
+
+**CRITICAL - Before Approving (PASS):**
+Before you decide to PASS, you MUST:
+
+1. **Verify the alignment matrix**: Check if this exact combination exists in the matrix above
+2. **If combination NOT in matrix**, reason about WHY it's restricted:
+   - What's the intent behind the restriction?
+   - Does the user's situation truly fit their chosen employment type, or should they reclassify?
+3. **Decide**:
+   - If user clearly fits a different employment type → Help them reclassify
+   - If it's a genuine edge case with solid justification → PASS
+   - If justification is weak or vague → FLAG
+
+**Decision Making:**
+- DEFAULT: Follow the alignment matrix
+- PASS if: (a) Combination exists in matrix, OR (b) Genuine edge case with solid justification
+- If combination not in matrix but user clearly fits a different employment type → Help them reclassify
+"""
 
         return system_prompt
 

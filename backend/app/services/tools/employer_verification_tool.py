@@ -35,6 +35,11 @@ class EmployerVerificationToolHandler(ToolHandler):
                         "type": "string",
                         "description": "Optional company website URL for additional verification context",
                         "nullable": True
+                    },
+                    "additional_context": {
+                        "type": "string",
+                        "description": "Optional additional context provided by the user (e.g., company address, industry, what they do, registration details). Include any relevant information that might help verify the company.",
+                        "nullable": True
                     }
                 },
                 "required": ["company_name"],
@@ -50,11 +55,13 @@ class EmployerVerificationToolHandler(ToolHandler):
         """Execute employer verification"""
         company_name = arguments["company_name"]
         company_website = arguments.get("company_website")
+        additional_context = arguments.get("additional_context")
 
         # Run verification (calls existing service)
         result = await self.verification_service.verify_employer(
             company_name=company_name,
-            website=company_website
+            website=company_website,
+            additional_context=additional_context
         )
 
         # Format result
@@ -69,10 +76,15 @@ class EmployerVerificationToolHandler(ToolHandler):
 
         if passed:
             message = "✅ VERIFICATION PASSED\n\n"
-            message += f"The company was verified by: {passed_by}\n\n"
 
-            if perplexity_details:
-                message += "**Perplexity AI found:**\n"
+            # Show which sources were checked and which one passed
+            message += "**Verification Sources:**\n"
+            message += f"- Google Sheets Allowlist: {'✅ PASSED' if checks.get('google_sheet') else '❌ Failed'}\n"
+            message += f"- Perplexity Web Search: {'✅ PASSED' if checks.get('perplexity') else '❌ Failed'}\n\n"
+
+            # If Perplexity passed, show its details
+            if checks.get('perplexity') and perplexity_details:
+                message += "**Perplexity AI Verification Details:**\n"
                 message += f"- Result: {perplexity_details.get('result', 'N/A')}\n"
                 message += f"- Explanation: {perplexity_details.get('explanation', 'N/A')}\n"
                 if perplexity_details.get('closest_company_name'):

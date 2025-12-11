@@ -99,21 +99,24 @@ chatform/
 │   │   │
 │   │   ├── routers/              # API route handlers
 │   │   │   ├── __init__.py
-│   │   │   └── validation.py     # /validate endpoint
+│   │   │   ├── validation.py     # /validate endpoint
+│   │   │   └── chat.py           # /chat endpoints
 │   │   │
 │   │   ├── services/             # Business logic
 │   │   │   ├── __init__.py
 │   │   │   ├── rule_engine.py    # Red flag detection
-│   │   │   └── chatbot.py        # GPT-4 resolution logic
+│   │   │   ├── chat_service.py   # GPT-4 resolution logic
+│   │   │   ├── employer_verification_service.py  # Company verification
+│   │   │   └── tools/            # Tool calling handlers
+│   │   │       ├── __init__.py
+│   │   │       ├── base.py       # ToolHandler, ToolRegistry
+│   │   │       └── employer_verification_tool.py
 │   │   │
-│   │   ├── models/               # Data models
-│   │   │   ├── __init__.py
-│   │   │   └── application.py    # Application data model
+│   │   ├── models/               # Data models (future)
 │   │   │
 │   │   └── schemas/              # Pydantic schemas
 │   │       ├── __init__.py
-│   │       ├── request.py        # API request schemas
-│   │       └── response.py       # API response schemas
+│   │       └── application.py    # Application data schemas
 │   │
 │   ├── tests/                    # Backend tests
 │   │   ├── test_rule_engine.py
@@ -503,40 +506,57 @@ Bot: Thanks! I've updated your income source to "E-commerce business owner".
   - Backend and frontend servers running (ports 8000 and 3000)
   - Vercel deployment configuration
 
-#### 🔄 In Progress: Interactive Chatbot
-**Current Task**: Implementing OpenAI GPT-4o chatbot for red flag resolution
+#### ✅ Interactive Chatbot (COMPLETED)
+**Status**: OpenAI GPT-4o chatbot fully implemented with tool calling support
 
-**Implementation Plan** (10 steps):
+**Completed Features**:
+- ✅ ChatBot modal component with conversation UI
+- ✅ Chat service with OpenAI GPT-4o integration
+- ✅ `/api/chat/message` endpoint for message handling
+- ✅ Type definitions for chat interfaces
+- ✅ "Fix It" button integration in MockForm
+- ✅ Context-aware system prompts for each rule type
+- ✅ Tool Registry Pattern for extensible function calling
+- ✅ Employer Verification Tool integration
+  - Calls existing EmployerVerificationService
+  - Provides real-time company verification during chat
+  - Supports company_name, company_website, and additional_context parameters
+  - Shows verification sources (Google Sheets Allowlist + Perplexity AI)
+- ✅ Pre-screening chat for political exposure questions
 
-**Frontend Phase** (Steps 1-4):
-1. ⏳ Update Type Definitions - Add chat interfaces (ChatSessionContext, ChatMessagePayload, ChatMessageResponse)
-2. ⬜ Create useChat Hook - Custom hook for chat state management and API calls
-3. ⬜ Create ChatBot Component - Modal overlay with chat UI (messages, input, header)
-4. ⬜ Integrate into MockForm - Add "Fix It" button next to failed rules, render chat modal
+**Tool Registry Architecture**:
+- **ToolHandler** base class for all tool implementations
+- **ToolRegistry** centralized tool management
+- **EmployerVerificationToolHandler** - First tool implementation
+- Rule-specific tool mapping in ChatService
+- Graceful error handling for tool execution
+- Formatted tool results for LLM consumption
 
-**Backend Phase** (Steps 5-8):
-5. ⬜ Create Chat Service - OpenAI GPT-4o integration with context building
-6. ⬜ Create Chat Router - `/api/chat/message` endpoint
-7. ⬜ Extend Backend Schemas - ChatMessage, ChatMessageRequest, ChatMessageResponse models
-8. ⬜ Register Chat Router - Add chat router to main.py
+#### ✅ Validation Rules Implemented
+**Current Order** (as displayed in UI):
+1. **Blacklist Name Check** - Checks against restricted names list
+2. **Employer Verification** - Multi-source company legitimacy check:
+   - Google Sheets allowlist (cached, 1-hour TTL)
+   - Perplexity AI web search with structured JSON output
+   - Thailand business constraints (requires Thailand connection)
+   - Securities industry exclusion (regulatory requirement)
+3. **Address Distance Check** - Geodesic distance calculation between home and work (150km threshold)
+4. **Political Exposure Check** - Pre-screening questionnaire with AI explanation validation
 
-**Configuration Phase** (Steps 9-10):
-9. ⬜ Update Backend Dependencies - Add `openai==1.36.0` to requirements.txt
-10. ⬜ Update Environment Variables - Add OPENAI_API_KEY, OPENAI_MODEL, OPENAI_MAX_TOKENS
+**Employer Verification Details**:
+- Dual-source verification (ANY pass = PASS)
+- Perplexity AI with Thailand-specific constraints:
+  - Companies outside Thailand must have possibility of presence in Thailand
+  - Securities/brokerage companies excluded (regulatory requirement)
+  - Checks Thailand DBD, DataForThai, SET/SEC registries
+  - Validates against international directories (Bloomberg, Reuters, Crunchbase)
+- Debug information includes perplexity_details in red flag
+- Chatbot receives initial verification context to guide questions
 
-**Design Decisions**:
-- Modal overlay (appears on "Fix It" button click)
-- One chat session at a time for simplicity
-- GPT-4o model for better reasoning quality
-- Stateless backend (send full context with each request)
-- First message auto-generates problem summary
-
-#### ⬜ Next Steps After Chatbot
-- Test complete flow: form → validation → chat resolution
-- Add more validation rules (company existence, income plausibility)
-- Improve error handling and edge cases
-- Add conversation memory/context
-- Manual testing checklist
+#### 🔄 Current Focus
+- Testing complete flow with real-world scenarios
+- Refining chatbot prompts based on user interactions
+- Performance optimization for tool calls
 
 ### Phase 2: Enhanced Rules
 - ⬜ External API for company verification
@@ -613,9 +633,20 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ### Backend (`.env`)
 ```bash
+# Google Maps API
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+
+# OpenAI Configuration
 OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o
+OPENAI_MAX_TOKENS=2000
+
+# Employer Verification Configuration
+PERPLEXITY_API_KEY=pplx-...
+EMPLOYER_ALLOWLIST_SHEET_URL=https://docs.google.com/spreadsheets/d/your_sheet_id/export?format=csv
+
+# Server Configuration
 ENVIRONMENT=development
-LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000
 ```
 
@@ -794,5 +825,5 @@ For questions or issues, please open a GitHub issue or contact the development t
 
 ---
 
-**Last Updated**: 2025-12-03
-**Version**: 0.1.0 (MVP Phase - Chatbot Implementation In Progress)
+**Last Updated**: 2025-12-11
+**Version**: 0.2.0 (MVP Phase - Chatbot with Tool Calling Completed)

@@ -21,13 +21,13 @@ export default function MockForm() {
     firstName: "",
     lastName: "",
     currentAddress: "",
-    occupation: "",
+    employmentType: "",
     jobTitle: "",
     companyName: "",
     companyAddress: "",
     companyWebsite: "",
     monthlyIncome: undefined,
-    incomeSource: "",
+    sourceOfFunds: "",
     currentAssets: undefined,
     countryIncomeSources: "",
   });
@@ -39,6 +39,7 @@ export default function MockForm() {
     { id: "employer_verification_check", label: "Employer Verification", status: "pending" },
     { id: "distance_check", label: "Address Distance Check", status: "pending" },
     { id: "political_exposure_check", label: "Political Exposure Check", status: "pending" },
+    { id: "source_of_funds_alignment_check", label: "Source of Funds Alignment", status: "pending" },
     // { id: "company_exists", label: "Company Existence Check", status: "pending" },
     // { id: "income_plausibility", label: "Income Plausibility Check", status: "pending" },
     // { id: "contradictions", label: "Field Contradictions Check", status: "pending" },
@@ -61,13 +62,13 @@ export default function MockForm() {
     formData.firstName,
     formData.lastName,
     formData.currentAddress,
-    formData.occupation,
+    formData.employmentType,
     formData.jobTitle,
     formData.companyName,
     formData.companyAddress,
     formData.companyWebsite,
     formData.monthlyIncome,
-    formData.incomeSource,
+    formData.sourceOfFunds,
     formData.currentAssets,
     formData.countryIncomeSources,
   ]);
@@ -129,7 +130,7 @@ export default function MockForm() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
@@ -241,20 +242,29 @@ export default function MockForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="occupation"
+              htmlFor="employmentType"
               className="block text-sm font-medium text-black mb-1"
             >
-              Occupation
+              Employment Type
             </label>
-            <input
-              type="text"
-              id="occupation"
-              name="occupation"
-              value={formData.occupation}
+            <select
+              id="employmentType"
+              name="employmentType"
+              value={formData.employmentType}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-              placeholder="e.g., Software Engineer"
-            />
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+            >
+              <option value="">-- Select Employment Type --</option>
+              <option value="Business Owner">Business Owner</option>
+              <option value="Government Officer">Government Officer</option>
+              <option value="Self-Employed">Self-Employed</option>
+              <option value="State Enterprise Officer">State Enterprise Officer</option>
+              <option value="Freelancer">Freelancer</option>
+              <option value="Student">Student</option>
+              <option value="Company Employee">Company Employee</option>
+              <option value="Politician">Politician</option>
+              <option value="Unemployed">Unemployed</option>
+            </select>
           </div>
           <div>
             <label
@@ -335,20 +345,26 @@ export default function MockForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="incomeSource"
+              htmlFor="sourceOfFunds"
               className="block text-sm font-medium text-black mb-1"
             >
-              Source of Income
+              Source of Funds
             </label>
-            <input
-              type="text"
-              id="incomeSource"
-              name="incomeSource"
-              value={formData.incomeSource}
+            <select
+              id="sourceOfFunds"
+              name="sourceOfFunds"
+              value={formData.sourceOfFunds}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-              placeholder="e.g., Employment, Business"
-            />
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+            >
+              <option value="">-- Select Source of Funds --</option>
+              <option value="Salary">Salary</option>
+              <option value="Business Income">Business Income</option>
+              <option value="Inheritance">Inheritance</option>
+              <option value="Savings">Savings</option>
+              <option value="Investments">Investments</option>
+              <option value="Pension">Pension</option>
+            </select>
           </div>
           <div>
             <label

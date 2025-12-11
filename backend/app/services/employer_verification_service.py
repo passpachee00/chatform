@@ -160,7 +160,7 @@ class EmployerVerificationService:
             print(f"Error in DataForThai check: {e}")
             return False
 
-    async def check_perplexity_web(self, company_name: str, website: Optional[str]) -> tuple[bool, Optional[Dict[str, Any]]]:
+    async def check_perplexity_web(self, company_name: str, website: Optional[str], additional_context: Optional[str] = None) -> tuple[bool, Optional[Dict[str, Any]]]:
         """
         Check if company appears legitimate via Perplexity web search
         using JSON structured output for Thailand securities broker compliance
@@ -168,6 +168,7 @@ class EmployerVerificationService:
         Args:
             company_name: Company name to verify
             website: Optional company website for additional context
+            additional_context: Optional additional details (address, industry, what they do, etc.)
 
         Returns:
             Tuple of (is_legitimate: bool, response_data: dict or None)
@@ -208,7 +209,8 @@ Follow the JSON structure exactly. Do not include any fields other than these fo
 
             # User message
             website_text = f"Their website is: {website}." if website else ""
-            user_message = f'Company name: "{company_name}".\n{website_text}'
+            context_text = f"Additional context: {additional_context}." if additional_context else ""
+            user_message = f'Company name: "{company_name}".\n{website_text}\n{context_text}'.strip()
 
             # JSON schema for structured output
             response_format = {
@@ -283,7 +285,8 @@ Follow the JSON structure exactly. Do not include any fields other than these fo
     async def verify_employer(
         self,
         company_name: str,
-        website: Optional[str] = None
+        website: Optional[str] = None,
+        additional_context: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Verify employer through two sources in parallel
@@ -291,6 +294,7 @@ Follow the JSON structure exactly. Do not include any fields other than these fo
         Args:
             company_name: Company name to verify
             website: Optional company website
+            additional_context: Optional additional details (address, industry, what they do)
 
         Returns:
             Dictionary with verification results:
@@ -309,7 +313,7 @@ Follow the JSON structure exactly. Do not include any fields other than these fo
         results = await asyncio.gather(
             self.check_google_sheet_allowlist(company_name),
             # self.check_dataforthai_registry(company_name),  # Disabled: unreliable for short names
-            self.check_perplexity_web(company_name, website),
+            self.check_perplexity_web(company_name, website, additional_context),
             return_exceptions=True  # Don't fail if one API errors
         )
 

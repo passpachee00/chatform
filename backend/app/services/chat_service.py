@@ -127,14 +127,33 @@ Key points:
 - Be empathetic - being on a restricted list can be stressful"""
 
         elif red_flag.rule == "distance_check":
-            system_prompt += """
+            # Extract Google geocoding status from debugInfo if available
+            geocoding_context = ""
+            if red_flag.debugInfo:
+                current_addr_info = red_flag.debugInfo.get("currentAddress", {})
+                company_addr_info = red_flag.debugInfo.get("companyAddress", {})
+
+                current_status = current_addr_info.get("google_status")
+                company_status = company_addr_info.get("google_status")
+
+                # Build context message for geocoding failures
+                if current_status and current_status != "OK":
+                    geocoding_context += f"\n- Current Address: Google Maps returned '{current_status}' (address could not be validated)"
+
+                if company_status and company_status != "OK":
+                    geocoding_context += f"\n- Company Address: Google Maps returned '{company_status}' (address could not be validated)"
+
+                if geocoding_context:
+                    geocoding_context = f"\n**Geocoding Issues:**{geocoding_context}\n"
+
+            system_prompt += f"""
 
 **Rule-Specific Guidance for Distance Check:**
-- The issue is about home and work addresses being far apart
-- Remember that this can be completely normal and legitimate
-- Customers may work remotely, visit the office only a few days per week, travel for work, or have multiple residences
+{geocoding_context}
+- The issue may be about addresses being far apart OR addresses that couldn't be validated by Google Maps
+- If Google Maps couldn't validate an address (ZERO_RESULTS, INVALID_REQUEST, etc.), ask the user to provide a complete, valid address
+- For distance issues (when addresses are valid but far apart): Customers may work remotely, visit the office only a few days per week, travel for work, or have multiple residences
 - Your job is to help clarify the situation, not to assume anything is wrong
-- Ask them about their work arrangement (remote, hybrid, travel, etc.)
 - Accept reasonable explanations about their work-life situation"""
 
         elif red_flag.rule == "employer_verification_check":

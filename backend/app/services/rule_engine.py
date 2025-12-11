@@ -46,28 +46,30 @@ class RuleEngine:
         if not current_addr or not company_addr:
             return None
 
-        # Geocode addresses to get coordinates
-        current_coords = await self.distance_service.geocode_address(current_addr)
-        company_coords = await self.distance_service.geocode_address(company_addr)
+        # Geocode addresses and calculate distance (returns coords and Google status)
+        current_coords, current_status = await self.distance_service.geocode_address(current_addr)
+        company_coords, company_status = await self.distance_service.geocode_address(company_addr)
 
-        # Calculate distance
-        is_within_limit, distance = await self.distance_service.check_distance_within_limit(
+        # Calculate distance (returns distance and statuses, but we already have statuses from above)
+        is_within_limit, distance, _, _ = await self.distance_service.check_distance_within_limit(
             current_addr,
             company_addr,
             limit_km=150.0
         )
 
-        # Prepare debug info
+        # Prepare debug info with Google geocoding status
         debug_info = {
             "currentAddress": {
                 "address": current_addr,
                 "lat": current_coords[0] if current_coords else None,
-                "lng": current_coords[1] if current_coords else None
+                "lng": current_coords[1] if current_coords else None,
+                "google_status": current_status  # Google API status code
             },
             "companyAddress": {
                 "address": company_addr,
                 "lat": company_coords[0] if company_coords else None,
-                "lng": company_coords[1] if company_coords else None
+                "lng": company_coords[1] if company_coords else None,
+                "google_status": company_status  # Google API status code
             },
             "distance_km": distance
         }

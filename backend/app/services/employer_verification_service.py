@@ -196,6 +196,10 @@ Guidelines:
 - If the name is too generic, ambiguous, or refers to multiple different entities and you cannot tell which one the client means, treat it as NO.
 - If you find strong evidence it is a scam, fake company, or unrelated to a business, treat it as NO.
 - When information is limited or conflicting, err on the side of NO rather than guessing.
+- Companies outside Thailand must have a possibility of a presence in Thailand. Use common sense: a local bakery in rural America would be NO, but a Malaysia software company would be YES.
+
+**Securities Industry Exclusion:**
+- Companies in the securities/brokerage industry must be NO (regulatory requirement)
 
 You must return the result as a JSON object with this structure:
 {

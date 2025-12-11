@@ -36,9 +36,9 @@ export default function MockForm() {
 
   const [rules, setRules] = useState<Rule[]>([
     { id: "blacklist_check", label: "Blacklist Name Check", status: "pending" },
+    { id: "employer_verification_check", label: "Employer Verification", status: "pending" },
     { id: "distance_check", label: "Address Distance Check", status: "pending" },
     { id: "political_exposure_check", label: "Political Exposure Check", status: "pending" },
-    { id: "employer_verification_check", label: "Employer Verification", status: "pending" },
     // { id: "company_exists", label: "Company Existence Check", status: "pending" },
     // { id: "income_plausibility", label: "Income Plausibility Check", status: "pending" },
     // { id: "contradictions", label: "Field Contradictions Check", status: "pending" },

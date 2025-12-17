@@ -558,6 +558,267 @@ Bot: Thanks! I've updated your income source to "E-commerce business owner".
 - Refining chatbot prompts based on user interactions
 - Performance optimization for tool calls
 
+---
+
+## NEXT FEATURE: ChatBot Data Interaction (In-Memory MVP)
+
+**Goal**: Enable ChatBot to actually modify application data during conversation, with real-time UI feedback showing changes.
+
+**Approach**: In-memory session store (no database yet - designed for easy migration later).
+
+### Why In-Memory First?
+- **Quick to build**: Zero database setup, works immediately
+- **Flexible**: Haven't decided on persistence strategy (customer's DB vs our DB)
+- **Sufficient for MVP**: Synchronous flow (user waits) doesn't need persistence
+- **Migration-ready**: Designed to swap in PostgreSQL/SQLite later without changing interfaces
+
+---
+
+### Components to Build
+
+#### 1. Backend: In-Memory Session Store
+
+**File**: `backend/app/services/session_store.py`
+
+```python
+# Simple in-memory dict for now
+# Later: Replace with database calls
+class SessionStore:
+    def __init__(self):
+        self._sessions = {}  # {session_id: ApplicationSession}
+
+    def create_session(self, session_id, application_data, red_flags):
+        # Store initial state
+        pass
+
+    def get_session(self, session_id):
+        # Retrieve session data
+        pass
+
+    def update_field(self, session_id, field_name, new_value):
+        # ChatBot modifies a field
+        # Track change in history
+        pass
+
+    def add_justification(self, session_id, field_name, justification):
+        # ChatBot accepts field as-is
+        # Record why it's acceptable
+        pass
+
+    def get_changes(self, session_id):
+        # Return all modifications
+        pass
+
+    def get_resolutions(self, session_id):
+        # Return all justifications
+        pass
+```
+
+**Data Structure**:
+```python
+@dataclass
+class ApplicationSession:
+    session_id: str
+    original_data: ApplicationData
+    current_data: ApplicationData  # Modified by chatbot
+    red_flags: List[RedFlag]
+    changes: List[FieldChange]  # [{field, from, to, timestamp}]
+    justifications: Dict[str, str]  # {field_name: reason}
+    created_at: datetime
+```
+
+---
+
+#### 2. Backend: ChatBot Data Tools
+
+**New Tools** (add to `backend/app/services/tools/`):
+
+##### A. `update_field_tool.py`
+```python
+class UpdateFieldTool(ToolHandler):
+    """
+    Tool for ChatBot to correct field values
+
+    Example:
+    User: "The company is actually SCB Bank, not SCB Bankk"
+    ChatBot calls: update_field("companyName", "SCB Bank")
+    """
+
+    async def execute(self, field_name: str, new_value: Any) -> str:
+        # 1. Update session store
+        # 2. Return confirmation message
+        # 3. Trigger UI update
+```
+
+##### B. `add_justification_tool.py`
+```python
+class AddJustificationTool(ToolHandler):
+    """
+    Tool for ChatBot to accept field as-is with explanation
+
+    Example:
+    User: "I work fully remote"
+    ChatBot calls: add_justification("companyAddress", "User works remotely - distance acceptable")
+    """
+
+    async def execute(self, field_name: str, justification: str) -> str:
+        # 1. Record justification in session
+        # 2. Mark red flag as resolved
+        # 3. Return confirmation
+```
+
+**Register Tools** in `chat_service.py`:
+```python
+self.tool_registry.register("update_field", UpdateFieldTool(session_store))
+self.tool_registry.register("add_justification", AddJustificationTool(session_store))
+```
+
+---
+
+#### 3. Backend: Modified API Response
+
+**Update** `/api/chat/message` endpoint to return:
+```json
+{
+  "messages": [...],
+  "currentData": {
+    "companyName": "SCB Bank",  // Updated value
+    "monthlyIncome": 50000
+  },
+  "changes": [
+    {
+      "field": "companyName",
+      "from": "SCB Bankk",
+      "to": "SCB Bank",
+      "timestamp": "2025-12-12T10:30:00Z"
+    }
+  ],
+  "resolutions": [
+    {
+      "rule": "address_distance",
+      "explanation": "Home and work are 700km apart",
+      "fixed": true,
+      "how": "User works fully remote"
+    }
+  ]
+}
+```
+
+---
+
+#### 4. Frontend: Current Data Snapshot UI
+
+**Add to** `components/ChatBot.tsx` - Third section after "Red Flags" and "Chat":
+
+```tsx
+{/* Section 3: Current Data Snapshot */}
+<div className="border-t p-4">
+  <h3 className="font-semibold mb-2">📊 Current Data Snapshot</h3>
+
+  <div className="space-y-2">
+    {Object.entries(currentData).map(([field, value]) => {
+      const change = changes.find(c => c.field === field);
+
+      return (
+        <div key={field} className="flex items-center justify-between text-sm">
+          <span className="font-medium">{field}:</span>
+          <div>
+            {change && (
+              <span className="text-gray-400 line-through mr-2">
+                {change.from}
+              </span>
+            )}
+            <span className={change ? "text-green-600 font-bold" : ""}>
+              {value}
+            </span>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+
+  {changes.length > 0 && (
+    <div className="mt-3 text-xs text-green-600">
+      ✓ {changes.length} field(s) updated
+    </div>
+  )}
+</div>
+```
+
+**Real-time Updates**:
+- After each ChatBot message, update `currentData` state
+- Show original → new value when field changes
+- Highlight changed fields in green
+- Track change count
+
+---
+
+### Implementation Checklist
+
+**Backend**:
+- [ ] Create `backend/app/services/session_store.py` (in-memory dict)
+- [ ] Create `backend/app/services/tools/update_field_tool.py`
+- [ ] Create `backend/app/services/tools/add_justification_tool.py`
+- [ ] Register new tools in `chat_service.py`
+- [ ] Update `/api/chat/message` response to include `currentData`, `changes`, `resolutions`
+- [ ] Update `ApplicationData` type to track original vs current state
+
+**Frontend**:
+- [ ] Add `currentData` state to `ChatBot.tsx`
+- [ ] Add `changes` array state
+- [ ] Create "Current Data Snapshot" UI section
+- [ ] Update state after each message (real-time)
+- [ ] Show original → new value for changed fields
+- [ ] Add visual indicators (strikethrough old, green new)
+
+**Testing**:
+- [ ] Test field update: "Company is SCB Bank" → verify update
+- [ ] Test justification: "I work remote" → verify acceptance
+- [ ] Test UI updates in real-time
+- [ ] Test multiple changes to same field
+- [ ] Test changes array tracking
+
+---
+
+### Migration Path (Future)
+
+When ready to add persistence (PostgreSQL/SQLite):
+
+**Replace SessionStore**:
+```python
+# Before (in-memory)
+session_store = SessionStore()
+
+# After (database)
+session_store = DatabaseSessionStore(db_connection)
+```
+
+**No changes needed**:
+- ✅ Tool interfaces stay the same
+- ✅ API responses stay the same
+- ✅ Frontend code stays the same
+
+**Just swap the storage backend!**
+
+---
+
+### Success Criteria
+
+When complete, the ChatBot should:
+1. ✅ Modify field values when user provides corrections
+2. ✅ Accept fields as-is when user provides valid justification
+3. ✅ Show real-time data updates in UI
+4. ✅ Track all changes (before → after)
+5. ✅ Generate complete audit trail (resolutions array)
+6. ✅ Return clean data + changes + justifications at end
+
+**User experience**:
+- User sees data changing in real-time as they chat
+- Clear visual feedback on what changed
+- Complete transparency for compliance
+
+---
+
 ### Phase 2: Enhanced Rules
 - ⬜ External API for company verification
 - ⬜ Address geocoding for distance calculation

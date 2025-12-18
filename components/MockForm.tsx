@@ -364,6 +364,7 @@ export default function MockForm() {
               <option value="Savings">Savings</option>
               <option value="Investments">Investments</option>
               <option value="Pension">Pension</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           <div>

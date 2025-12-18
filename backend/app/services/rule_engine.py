@@ -9,15 +9,15 @@ import asyncio
 # Source of Funds alignment matrix
 # Maps employment type -> allowed source of funds
 SOURCE_OF_FUNDS_ALIGNMENT = {
-    "Business Owner": ["Inheritance", "Savings", "Investments", "Pension", "Business Income"],
-    "Government Officer": ["Salary", "Inheritance", "Savings", "Investments", "Pension"],
-    "Self-Employed": ["Inheritance", "Savings", "Investments", "Pension", "Business Income"],
-    "State Enterprise Officer": ["Salary", "Inheritance", "Savings", "Investments", "Pension"],
-    "Freelancer": ["Inheritance", "Savings", "Investments", "Pension", "Salary"],
-    "Student": ["Inheritance", "Savings", "Investments"],
-    "Company Employee": ["Salary", "Inheritance", "Savings", "Investments"],
-    "Politician": ["Salary", "Inheritance", "Savings", "Investments", "Pension"],
-    "Unemployed": ["Inheritance", "Savings", "Investments", "Pension"],
+    "Business Owner": ["Inheritance", "Savings", "Investments", "Pension", "Business Income", "Other"],
+    "Government Officer": ["Salary", "Inheritance", "Savings", "Investments", "Pension", "Other"],
+    "Self-Employed": ["Salary", "Inheritance", "Savings", "Investments", "Pension", "Business Income", "Other"],
+    "State Enterprise Officer": ["Salary", "Inheritance", "Savings", "Investments", "Pension", "Other"],
+    "Freelancer": ["Salary", "Inheritance", "Savings", "Investments", "Pension", "Other"],
+    "Student": ["Inheritance", "Savings", "Investments", "Other"],
+    "Company Employee": ["Salary", "Inheritance", "Savings", "Investments", "Pension", "Other"],
+    "Politician": ["Salary", "Inheritance", "Savings", "Investments", "Pension", "Other"],
+    "Unemployed": ["Inheritance", "Savings", "Investments", "Pension", "Other"],
 }
 
 
